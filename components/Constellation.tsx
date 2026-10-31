@@ -8,6 +8,19 @@ export function GlowDefs({ id = "starGlow" }: { id?: string }) {
         <stop offset="22%" stopColor="#f3c96b" stopOpacity="0.4" />
         <stop offset="100%" stopColor="#9db4e6" stopOpacity="0" />
       </radialGradient>
+      {/* Point-spread halo and diffraction spike for the realistic stars. */}
+      <radialGradient id={`${id}Psf`}>
+        <stop offset="0%" stopColor="#fff" stopOpacity="1" />
+        <stop offset="10%" stopColor="#f4f7ff" stopOpacity="0.8" />
+        <stop offset="28%" stopColor="#c9d6ff" stopOpacity="0.22" />
+        <stop offset="60%" stopColor="#9db4e6" stopOpacity="0.05" />
+        <stop offset="100%" stopColor="#9db4e6" stopOpacity="0" />
+      </radialGradient>
+      <radialGradient id={`${id}Spike`}>
+        <stop offset="0%" stopColor="#fff" stopOpacity="0.9" />
+        <stop offset="35%" stopColor="#dfe8ff" stopOpacity="0.25" />
+        <stop offset="100%" stopColor="#dfe8ff" stopOpacity="0" />
+      </radialGradient>
     </defs>
   );
 }
@@ -20,12 +33,15 @@ export function ConstellationArt({
   glowId = "starGlow",
   glowR = 9,
   coreR = 2,
+  real = false,
 }: {
   c: Cluster;
   delay?: number;
   glowId?: string;
   glowR?: number;
   coreR?: number;
+  /** Draw stars as points of light (soft halo, spikes, pinpoint core) rather than dots. */
+  real?: boolean;
 }) {
   const starsDone = delay + c.stars.length * 0.12;
   return (
@@ -39,12 +55,27 @@ export function ConstellationArt({
           style={{ "--d": `${starsDone - 0.2 + k * 0.1}s` } as React.CSSProperties}
         />
       ))}
-      {c.stars.map(([x, y], j) => (
-        <g key={`s${j}`} className="c-star" style={{ "--d": `${delay + j * 0.12}s` } as React.CSSProperties}>
-          <circle className="c-glow" cx={x} cy={y} r={glowR} fill={`url(#${glowId})`} />
-          <circle className="c-core" cx={x} cy={y} r={j === 0 ? coreR * 1.3 : coreR} />
-        </g>
-      ))}
+      {c.stars.map(([x, y], j) => {
+        // The first star is the constellation's brightest; the rest vary a little.
+        const b = j === 0 ? 1.3 : 0.8 + ((j * 37) % 5) * 0.06;
+        return (
+          <g key={`s${j}`} className="c-star" style={{ "--d": `${delay + j * 0.12}s` } as React.CSSProperties}>
+            <circle className="c-glow" cx={x} cy={y} r={glowR} fill={`url(#${glowId})`} />
+            {real ? (
+              <>
+                <circle className="c-psf" cx={x} cy={y} r={glowR * 0.9 * b} fill={`url(#${glowId}Psf)`} />
+                <g className="c-spike" fill={`url(#${glowId}Spike)`}>
+                  <ellipse cx={x} cy={y} rx={glowR * 1.5 * b} ry={0.32 * b} />
+                  <ellipse cx={x} cy={y} rx={0.32 * b} ry={glowR * 1.5 * b} />
+                </g>
+                <circle className="c-core" cx={x} cy={y} r={coreR * 0.55 * b} />
+              </>
+            ) : (
+              <circle className="c-core" cx={x} cy={y} r={j === 0 ? coreR * 1.3 : coreR} />
+            )}
+          </g>
+        );
+      })}
     </>
   );
 }

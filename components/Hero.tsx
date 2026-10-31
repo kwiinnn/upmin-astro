@@ -84,7 +84,7 @@ export function Hero() {
                   style={{ "--p": `${i * 0.9}s` } as React.CSSProperties}
                 >
                   <rect className="c-hit" x={b.x} y={b.y} width={b.w} height={b.h} rx={18} fill="transparent" />
-                  <ConstellationArt c={c} delay={INTRO_START + i * INTRO_STEP} />
+                  <ConstellationArt c={c} delay={INTRO_START + i * INTRO_STEP} real />
                   <text className="c-label" x={c.labelAt[0]} y={c.labelAt[1]} textAnchor={c.labelAnchor}>
                     <tspan className="num">{c.numeral}</tspan> {c.name}
                   </text>
@@ -95,7 +95,7 @@ export function Hero() {
         </div>
 
         <div className="flex items-center gap-4 pt-3 md:row-start-3 md:pt-8">
-          <p className="text-sm leading-snug text-faint">
+          <p className="text-sm leading-snug text-mute [text-shadow:0_1px_8px_rgb(0_0_0/0.8)]">
             General Assembly · <time dateTime={NEXT_MEETING.iso}>{NEXT_MEETING.label}</time>
           </p>
         </div>
