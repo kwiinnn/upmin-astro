@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { post } from "@/lib/client";
-import { CLUB_FULL_NAME, CLUB_NAME, FOUNDED, LIMITS, NEXT_MEETING, SOCIAL_LINKS } from "@/lib/site";
+import { CLUB_FULL_NAME, LIMITS, NEXT_MEETING, SOCIAL_LINKS } from "@/lib/site";
 import { Facebook, Instagram, Mail } from "./Icons";
 import { Logo } from "./Logo";
 import { NextButton } from "./NextButton";
@@ -84,10 +84,8 @@ export function Footer() {
         </div>
         <div className="mt-10 flex flex-col items-center gap-3 text-center">
           <Logo className="size-10 text-ink" />
-          <p className="text-sm text-mute">{CLUB_NAME} · University of the Philippines Mindanao</p>
-          <p className="max-w-xs text-xs text-faint">
-            {CLUB_FULL_NAME} · Est. <time dateTime={FOUNDED.iso}>{FOUNDED.label}</time>
-          </p>
+          <p className="text-sm text-mute">University of the Philippines Mindanao</p>
+          <p className="max-w-xs text-balance text-xs text-faint">{CLUB_FULL_NAME}</p>
         </div>
         <div className="mt-8">
           <NextButton to="hero" label="The beginning" up />

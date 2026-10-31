@@ -60,7 +60,7 @@ If you add a custom domain, set `NEXT_PUBLIC_SITE_URL` to it, or just regenerate
 ## Editing content
 
 - Cluster copy, facts, links and constellation shapes: `lib/clusters.ts`
-- Club name, founding date, next meeting date, social links, length limits: `lib/site.ts` (the Facebook link is a `#` placeholder)
+- Club name, next meeting date, social links, length limits: `lib/site.ts` (the Facebook link is a `#` placeholder)
 - Logo: `components/Logo.tsx` (vector trace of the club mark; `animated` adds the draw-in, flare and comet). Favicons are `app/favicon.ico`, `app/icon.svg` and `app/apple-icon.png`
 - Colors and animation: `app/globals.css`
 

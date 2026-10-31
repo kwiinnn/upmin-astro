@@ -2,7 +2,6 @@
 
 export const CLUB_NAME = "UP Mindanao Astro";
 export const CLUB_FULL_NAME = "Astronomy and Space Science Technology and Research Organization";
-export const FOUNDED = { iso: "2026-08-31", label: "31 August 2026" };
 export const SITE_TITLE = "Mission Briefing";
 
 // 11/06/2026 read as MM/DD/YYYY (6 November 2026).
