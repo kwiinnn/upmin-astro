@@ -15,44 +15,20 @@ function seeded(seed: number) {
   };
 }
 
+// Math.sin/cos can differ in the last digit between the server and the
+// browser, which breaks hydration; two decimals is plenty for a 320×200 SVG.
+const r2 = (n: number) => Math.round(n * 100) / 100;
+
 const VB = "0 0 320 200";
 
-/* I. Expanding universe: a field of galaxies scaling up together, so every
-   dot recedes from every other one with no centre. */
-const rnd = seeded(7);
-const GALAXIES = Array.from({ length: 46 }, () => {
-  const a = rnd() * Math.PI * 2;
-  const d = Math.sqrt(rnd()) * 95;
-  return { x: 160 + Math.cos(a) * d * 1.5, y: 100 + Math.sin(a) * d, r: 0.8 + rnd() * 1.6, gold: rnd() < 0.15 };
-});
-
+/* I. Expanding universe: Webb's First Deep Field (galaxy cluster SMACS 0723),
+   thousands of real galaxies. A slow push-in reads as space growing. */
 function Expanding() {
-  const field = GALAXIES.map((g, i) => (
-    <circle key={i} cx={g.x} cy={g.y} r={g.r} fill={g.gold ? "#f3c96b" : "#dfe8ff"} />
-  ));
   return (
-    <svg viewBox={VB} className="h-full w-full" aria-hidden="true">
-      <defs>
-        <radialGradient id="fadeEdge">
-          <stop offset="0.55" stopColor="#fff" />
-          <stop offset="1" stopColor="#fff" stopOpacity="0" />
-        </radialGradient>
-        <mask id="expandMask">
-          <rect width="320" height="200" fill="url(#fadeEdge)" />
-        </mask>
-        <radialGradient id="bang">
-          <stop offset="0" stopColor="#f3c96b" stopOpacity="0.35" />
-          <stop offset="1" stopColor="#f3c96b" stopOpacity="0" />
-        </radialGradient>
-      </defs>
-      <circle cx="160" cy="100" r="60" fill="url(#bang)" />
-      <g mask="url(#expandMask)">
-        <g className="v-expand">{field}</g>
-        <g className="v-expand v-expand-b" transform="rotate(137 160 100)">
-          {field}
-        </g>
-      </g>
-    </svg>
+    <div className="v-deep-wrap">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/deep-field.webp" alt="" className="v-deep" loading="lazy" decoding="async" />
+    </div>
   );
 }
 
@@ -200,12 +176,12 @@ function SkyDome() {
         <g className="v-dome" style={{ transformOrigin: `${pole.x}px ${pole.y}px` }}>
           {DOME_STARS.map((s, i) => {
             const rad = (s.a * Math.PI) / 180;
-            const x = pole.x + Math.cos(rad) * s.d;
-            const y = pole.y + Math.sin(rad) * s.d;
+            const x = r2(pole.x + Math.cos(rad) * s.d);
+            const y = r2(pole.y + Math.sin(rad) * s.d);
             return (
               <g key={i}>
                 <path
-                  d={`M${x} ${y} A ${s.d} ${s.d} 0 0 0 ${pole.x + Math.cos(rad + 0.5) * s.d} ${pole.y + Math.sin(rad + 0.5) * s.d}`}
+                  d={`M${x} ${y} A ${s.d} ${s.d} 0 0 0 ${r2(pole.x + Math.cos(rad + 0.5) * s.d)} ${r2(pole.y + Math.sin(rad + 0.5) * s.d)}`}
                   fill="none"
                   stroke="#9db4e6"
                   strokeOpacity="0.16"
@@ -227,8 +203,12 @@ function SkyDome() {
   );
 }
 
-const VISUALS: Record<ClusterId, { el: () => React.JSX.Element; caption: string }> = {
-  universe: { el: Expanding, caption: "Every galaxy drifts away from every other. There is no centre." },
+const VISUALS: Record<ClusterId, { el: () => React.JSX.Element; caption: string; credit?: string }> = {
+  universe: {
+    el: Expanding,
+    caption: "Webb's First Deep Field: nearly every dot is a galaxy, and every one drifts away from every other.",
+    credit: "NASA, ESA, CSA, and STScI",
+  },
   worlds: { el: Orbits, caption: "Too close, too hot. Too far, too cold. Life likes the zone in between." },
   look: { el: Prism, caption: "Split starlight into a spectrum and you can read what the star is made of." },
   going: { el: Rocket, caption: "Spacecraft don't fly straight. They ride carefully planned arcs." },
@@ -240,7 +220,7 @@ const VISUALS: Record<ClusterId, { el: () => React.JSX.Element; caption: string 
 
 export function SignatureVisual({ id, active }: { id: ClusterId; active: boolean }) {
   const ref = useRef<HTMLDivElement>(null);
-  const { el: Visual, caption } = VISUALS[id];
+  const { el: Visual, caption, credit } = VISUALS[id];
 
   // SMIL animations (the rocket) ignore CSS play-state, so pause them directly.
   useEffect(() => {
@@ -255,7 +235,10 @@ export function SignatureVisual({ id, active }: { id: ClusterId; active: boolean
       <div className="visual aspect-[16/10] w-full">
         <Visual />
       </div>
-      <figcaption className="mt-3 text-sm text-faint">{caption}</figcaption>
+      <figcaption className="mt-3 text-sm text-faint">
+        {caption}
+        {credit && <span className="mt-1 block text-xs text-faint/70">Image: {credit}</span>}
+      </figcaption>
     </figure>
   );
 }

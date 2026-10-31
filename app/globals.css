@@ -760,29 +760,36 @@ svg :focus-visible {
 
 /* ---------- Signature visuals ---------- */
 
-.v-expand {
-  transform-box: view-box;
-  transform-origin: 160px 100px;
-  animation: expand 14s linear infinite;
+.v-deep-wrap {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  border-radius: inherit;
+  background: #000;
 }
 
-.v-expand-b {
-  animation-delay: -7s;
+.v-deep {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform-origin: 50% 46%;
+  animation: deep-zoom 22s linear infinite;
 }
 
-@keyframes expand {
+@keyframes deep-zoom {
   0% {
-    transform: scale(0.2);
+    transform: scale(1);
     opacity: 0;
   }
-  20% {
+  6%,
+  90% {
     opacity: 1;
   }
-  75% {
-    opacity: 0.9;
-  }
   100% {
-    transform: scale(1.7);
+    transform: scale(1.45);
     opacity: 0;
   }
 }
@@ -845,15 +852,6 @@ svg :focus-visible {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .v-expand {
-    transform: scale(1);
-    opacity: 1;
-  }
-
-  .v-expand-b {
-    display: none;
-  }
-
   .v-ray {
     stroke-dashoffset: 0;
   }
