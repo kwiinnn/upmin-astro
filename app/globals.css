@@ -1,26 +1,903 @@
 @import "tailwindcss";
 
+@theme {
+  --color-night: #060a18;
+  --color-deep: #02040b;
+  --color-ink: #eaf0ff;
+  --color-mute: #aab8d9;
+  --color-faint: #7d8cb3;
+  --color-line: #9db4e6;
+  --color-gold: #f3c96b;
+  --color-gold-soft: #f7dca0;
+  --font-display: var(--font-display), "Iowan Old Style", Georgia, serif;
+  --font-sans: var(--font-body), system-ui, sans-serif;
+  --ease-calm: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --surface: rgb(22 34 72 / 0.32);
+  --surface-strong: rgb(28 42 88 / 0.5);
+  --outline: rgb(157 180 230 / 0.22);
+  --outline-strong: rgb(157 180 230 / 0.45);
+  --gutter: 1.25rem;
+  color-scheme: dark;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  background: var(--color-deep);
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  min-height: 100svh;
+  background:
+    radial-gradient(120% 70% at 50% 0%, #0c1638 0%, transparent 60%),
+    linear-gradient(180deg, var(--color-night) 0%, var(--color-deep) 100%);
+  background-attachment: fixed;
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: rgb(243 201 107 / 0.35);
+  color: #fff;
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-gold);
+  outline-offset: 3px;
+  border-radius: 6px;
+}
+
+svg :focus-visible {
+  outline: none;
+}
+
+.display {
+  font-family: var(--font-display);
+  font-weight: 400;
+  letter-spacing: -0.01em;
+  line-height: 1.05;
+}
+
+.eyebrow {
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+
+.wrap {
+  width: 100%;
+  max-width: 68rem;
+  margin-inline: auto;
+  padding-inline: max(var(--gutter), env(safe-area-inset-left));
+}
+
+/* ---------- Background: canvas + nebula ---------- */
+
+.starfield {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0;
+  pointer-events: none;
+}
+
+.nebula {
+  position: fixed;
+  inset: -20%;
+  z-index: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.nebula span {
+  position: absolute;
+  border-radius: 50%;
+  will-change: transform;
+  animation: nebula-drift 70s ease-in-out infinite alternate;
+}
+
+.nebula span:nth-child(1) {
+  width: 70vmax;
+  height: 70vmax;
+  left: -10%;
+  top: 5%;
+  background: radial-gradient(closest-side, rgb(46 74 170 / 0.24), transparent);
+}
+
+.nebula span:nth-child(2) {
+  width: 60vmax;
+  height: 60vmax;
+  right: -15%;
+  top: 35%;
+  background: radial-gradient(closest-side, rgb(92 58 160 / 0.16), transparent);
+  animation-duration: 90s;
+  animation-direction: alternate-reverse;
+}
+
+.nebula span:nth-child(3) {
+  width: 50vmax;
+  height: 50vmax;
+  left: 20%;
+  bottom: -10%;
+  background: radial-gradient(closest-side, rgb(30 96 150 / 0.14), transparent);
+  animation-duration: 110s;
+}
+
+@keyframes nebula-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(6vmax, -4vmax, 0) scale(1.12);
+  }
+}
+
+.cinematic .nebula span {
+  animation-duration: 140s;
+}
+
+/* ---------- Logo ---------- */
+
+.logo {
+  flex: none;
+}
+
+/* Swoosh draws tail to tail through a stroked mask; the gap is longer
+   than the dash so the round cap stays hidden at the start. */
+.logo-anim .logo-trace {
+  stroke-dasharray: 1 1.2;
+  animation: logo-trace 1.8s var(--ease-calm) 0.2s both;
+}
+
+@keyframes logo-trace {
+  from {
+    stroke-dashoffset: 1.1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.logo-anim .logo-star,
+.logo-spin,
+.logo-flare,
+.logo-glow {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.logo-anim .logo-star {
+  animation: logo-star 1s var(--ease-calm) 0.5s both;
+}
+
+@keyframes logo-star {
+  0% {
+    opacity: 0;
+    transform: scale(0.2) rotate(-135deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.12) rotate(8deg);
+  }
+  100% {
+    transform: none;
+  }
+}
+
+.logo-spin {
+  transition: transform 0.9s var(--ease-calm);
+}
+
+.logo-anim:hover .logo-spin {
+  transform: rotate(90deg);
+}
+
+.logo-flare {
+  opacity: 0.75;
+  mix-blend-mode: screen;
+  animation:
+    logo-flare 1.4s var(--ease-calm) 0.9s both,
+    logo-shimmer 5s ease-in-out 2.3s infinite;
+}
+
+@keyframes logo-flare {
+  0% {
+    opacity: 0;
+    transform: scale(0.1);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.25);
+  }
+  100% {
+    opacity: 0.75;
+    transform: none;
+  }
+}
+
+@keyframes logo-shimmer {
+  50% {
+    opacity: 1;
+    transform: scale(1.08, 1.15);
+  }
+}
+
+.logo-glow {
+  opacity: 0.8;
+  animation:
+    logo-glow-in 1.6s var(--ease-calm) 0.7s both,
+    logo-breathe 6s ease-in-out 2.3s infinite;
+}
+
+@keyframes logo-glow-in {
+  from {
+    opacity: 0;
+    transform: scale(0.4);
+  }
+}
+
+@keyframes logo-breathe {
+  50% {
+    opacity: 1;
+    transform: scale(1.1);
+  }
+}
+
+/* ---------- Constellations (shared) ---------- */
+
+.c-line {
+  fill: none;
+  stroke: var(--color-line);
+  stroke-width: 0.9;
+  stroke-linecap: round;
+  stroke-opacity: 0.55;
+  transition:
+    stroke-width 0.4s var(--ease-calm),
+    stroke-opacity 0.4s var(--ease-calm),
+    stroke 0.4s var(--ease-calm);
+}
+
+.c-core {
+  fill: #f4f7ff;
+  transition: fill 0.4s var(--ease-calm);
+}
+
+.c-star {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.c-glow {
+  opacity: 0.55;
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: opacity 0.5s var(--ease-calm);
+}
+
+.c-label {
+  font-family: var(--font-display);
+  font-size: 17px;
+  fill: var(--color-ink);
+  opacity: 0;
+  transition: opacity 0.45s var(--ease-calm);
+  pointer-events: none;
+}
+
+.c-label tspan.num {
+  fill: var(--color-gold);
+  font-style: italic;
+}
+
+/* Intro: stars fade in one by one, then lines trace their path. */
+.intro .c-star {
+  opacity: 0;
+  animation: star-in 0.7s var(--ease-calm) forwards;
+  animation-delay: var(--d);
+}
+
+.intro .c-line {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: line-draw 0.9s var(--ease-calm) forwards;
+  animation-delay: var(--d);
+}
+
+@keyframes star-in {
+  from {
+    opacity: 0;
+    transform: scale(0.2);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes line-draw {
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Idle: each constellation breathes on its own rhythm. */
+.idle .c-glow {
+  animation: glow-pulse 4.5s ease-in-out infinite;
+  animation-delay: var(--p, 0s);
+}
+
+@keyframes glow-pulse {
+  0%,
+  100% {
+    opacity: 0.4;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 0.85;
+    transform: scale(1.12);
+  }
+}
+
+.const {
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.const:hover .c-line,
+.const:focus-visible .c-line,
+.const.is-on .c-line {
+  stroke-width: 1.6;
+  stroke-opacity: 0.95;
+}
+
+.const:hover .c-glow,
+.const:focus-visible .c-glow,
+.const.is-on .c-glow {
+  opacity: 1;
+}
+
+.const:hover .c-core,
+.const:focus-visible .c-core,
+.const.is-on .c-core {
+  fill: var(--color-gold-soft);
+}
+
+.const:hover .c-label,
+.const:focus-visible .c-label,
+.const.is-on .c-label {
+  opacity: 1;
+}
+
+.const:focus-visible .c-hit {
+  stroke: var(--color-gold);
+  stroke-opacity: 0.6;
+  stroke-dasharray: 3 5;
+}
+
+@media (hover: none) {
+  .labels-ready .c-label {
+    opacity: 0.72;
+  }
+}
+
+/* ---------- Hero ---------- */
+
+.hero-sky {
+  transition:
+    transform 1.3s var(--ease-calm),
+    opacity 1.3s var(--ease-calm);
+  transform-origin: var(--zx, 50%) var(--zy, 50%);
+}
+
+.hero-sky.zoom {
+  transform: scale(1.35);
+  opacity: 0.35;
+}
+
+.fade-up {
+  opacity: 0;
+  animation: fade-up 1s var(--ease-calm) forwards;
+  animation-delay: var(--d, 0s);
+}
+
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* ---------- Next (slide) button ---------- */
+
+.next {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  max-width: 100%;
+  min-height: 60px;
+  padding: 0.45rem 0.45rem 0.45rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid var(--outline-strong);
+  background: rgb(6 10 24 / 0.6);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  color: var(--color-ink);
+  text-align: left;
+  transition:
+    border-color 0.3s var(--ease-calm),
+    box-shadow 0.3s var(--ease-calm);
+}
+
+.next-text {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+}
+
+.next-kicker {
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--color-gold);
+}
+
+.next-label {
+  overflow: hidden;
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  line-height: 1.15;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.next-arrow {
+  display: grid;
+  flex: none;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-left: 0.25rem;
+  border-radius: 50%;
+  background: var(--color-gold);
+  color: #1a1305;
+  transition: background-color 0.3s var(--ease-calm);
+}
+
+.next-arrow svg {
+  animation: next-bob 2.4s ease-in-out infinite;
+}
+
+.next:hover,
+.next:focus-visible {
+  border-color: rgb(243 201 107 / 0.7);
+  box-shadow: 0 0 24px rgb(243 201 107 / 0.18);
+}
+
+.next:hover .next-arrow,
+.next:focus-visible .next-arrow {
+  background: var(--color-gold-soft);
+}
+
+@keyframes next-bob {
+  0%,
+  100% {
+    transform: translateY(-2px);
+  }
+  50% {
+    transform: translateY(3px);
+  }
+}
+
+/* ---------- Mini-map ---------- */
+
+.minimap {
+  position: fixed;
+  right: max(0.75rem, env(safe-area-inset-right));
+  bottom: max(0.75rem, env(safe-area-inset-bottom));
+  z-index: 40;
+  width: 62px;
+  padding: 5px;
+  border-radius: 14px;
+  background: rgb(6 10 24 / 0.72);
+  border: 1px solid var(--outline);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  opacity: 0;
+  transform: translateY(12px) scale(0.96);
+  pointer-events: none;
+  transition:
+    opacity 0.5s var(--ease-calm),
+    transform 0.5s var(--ease-calm),
+    border-color 0.8s var(--ease-calm),
+    box-shadow 0.8s var(--ease-calm);
+}
+
+.minimap.show {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.minimap.complete {
+  border-color: rgb(243 201 107 / 0.55);
+  box-shadow: 0 0 22px rgb(243 201 107 / 0.18);
+}
+
+.minimap .c-line {
+  stroke-width: 2.4;
+  stroke-opacity: 0.18;
+}
+
+.minimap .c-core {
+  fill: rgb(170 184 217 / 0.35);
+}
+
+.minimap .visited .c-line {
+  stroke-opacity: 0.6;
+}
+
+.minimap .visited .c-core {
+  fill: #f4f7ff;
+}
+
+.minimap .active .c-line {
+  stroke: var(--color-gold);
+  stroke-opacity: 1;
+  stroke-width: 3.2;
+}
+
+.minimap .active .c-core {
+  fill: var(--color-gold);
+}
+
+.minimap .active .c-glow {
+  opacity: 1;
+}
+
+.minimap .c-glow {
+  opacity: 0;
+}
+
+/* ---------- Scroll reveal ---------- */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(28px);
+  transition:
+    opacity 0.9s var(--ease-calm),
+    transform 0.9s var(--ease-calm);
+  transition-delay: var(--d, 0s);
+}
+
+.in .reveal {
+  opacity: 1;
+  transform: none;
+}
+
+.divider path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 1.6s var(--ease-calm);
+}
+
+.divider circle {
+  opacity: 0;
+  transition: opacity 0.6s var(--ease-calm);
+  transition-delay: var(--d, 0s);
+}
+
+.in .divider path {
+  stroke-dashoffset: 0;
+}
+
+.in .divider circle {
+  opacity: 1;
+}
+
+/* Signature visuals idle until their section is on screen. */
+.visual * {
+  animation-play-state: paused !important;
+}
+
+.on .visual * {
+  animation-play-state: running !important;
+}
+
+/* ---------- Surfaces ---------- */
+
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--outline);
+  border-radius: 20px;
+}
+
+.fact {
+  position: relative;
+  border-radius: 20px;
+  background:
+    radial-gradient(120% 140% at 0% 0%, rgb(243 201 107 / 0.1), transparent 55%),
+    var(--surface);
+  border: 1px solid rgb(243 201 107 / 0.28);
+}
+
+.fact-num {
+  font-family: var(--font-display);
+  color: var(--color-gold);
+  font-variant-numeric: tabular-nums lining-nums;
+  line-height: 1;
+  text-shadow: 0 0 18px rgb(243 201 107 / 0.18);
+}
+
+.res {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  min-height: 64px;
+  padding: 1rem 1.1rem;
+  border-radius: 16px;
+  border: 1px solid var(--outline);
+  transition:
+    border-color 0.3s var(--ease-calm),
+    background-color 0.3s var(--ease-calm);
+}
+
+.res:hover {
+  border-color: var(--outline-strong);
+  background-color: var(--surface);
+}
+
+.res.try {
+  background: rgb(243 201 107 / 0.07);
+  border-color: rgb(243 201 107 / 0.32);
+}
+
+.res.try:hover {
+  background: rgb(243 201 107 / 0.12);
+  border-color: rgb(243 201 107 / 0.55);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 52px;
+  padding: 0.75rem 1.4rem;
+  border-radius: 999px;
+  font-weight: 700;
+  transition:
+    background-color 0.3s var(--ease-calm),
+    border-color 0.3s var(--ease-calm),
+    opacity 0.3s var(--ease-calm);
+}
+
+.btn-gold {
+  background: var(--color-gold);
+  color: #1a1305;
+}
+
+.btn-gold:hover {
+  background: var(--color-gold-soft);
+}
+
+.btn-gold:disabled {
+  opacity: 0.5;
+}
+
+.btn-ghost {
+  border: 1px solid var(--outline-strong);
+  color: var(--color-ink);
+}
+
+.btn-ghost:hover {
+  background: var(--surface);
+}
+
+.field {
+  width: 100%;
+  border-radius: 16px;
+  border: 1px solid var(--outline-strong);
+  background: rgb(2 4 11 / 0.6);
+  padding: 0.9rem 1rem;
+  color: var(--color-ink);
+  font-size: 1.0625rem;
+  transition: border-color 0.3s var(--ease-calm);
+}
+
+.field::placeholder {
+  color: var(--color-faint);
+}
+
+.field:focus {
+  outline: none;
+  border-color: var(--color-gold);
+}
+
+/* ---------- Tap ripple ---------- */
+
+.tap {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.tap::after {
+  content: "";
+  position: absolute;
+  left: var(--rx, 50%);
+  top: var(--ry, 50%);
+  width: 12px;
+  height: 12px;
+  margin: -6px 0 0 -6px;
+  border-radius: 50%;
+  background: rgb(243 201 107 / 0.35);
+  opacity: 0;
+  transform: scale(0);
+  pointer-events: none;
+  z-index: -1;
+}
+
+.tap.rippling::after {
+  animation: ripple 0.65s var(--ease-calm);
+}
+
+@keyframes ripple {
+  from {
+    opacity: 1;
+    transform: scale(0);
+  }
+  to {
+    opacity: 0;
+    transform: scale(28);
+  }
+}
+
+/* ---------- Reduced motion ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    animation-delay: 0s !important;
+    transition-duration: 0.2s !important;
+    transition-delay: 0s !important;
+  }
+
+  .nebula span,
+  .next-arrow svg,
+  .idle .c-glow,
+  .visual * {
+    animation: none !important;
+  }
+
+  .reveal {
+    transform: none;
+  }
+
+  /* SMIL ignores the rules above, so the comet is removed outright. */
+  .logo-comet {
+    display: none;
+  }
+
+  .hero-sky.zoom {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+/* ---------- Signature visuals ---------- */
+
+.v-expand {
+  transform-box: view-box;
+  transform-origin: 160px 100px;
+  animation: expand 14s linear infinite;
+}
+
+.v-expand-b {
+  animation-delay: -7s;
+}
+
+@keyframes expand {
+  0% {
+    transform: scale(0.2);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  75% {
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.7);
+    opacity: 0;
+  }
+}
+
+.v-orbit {
+  transform-box: view-box;
+  transform-origin: 160px 100px;
+  animation: orbit linear infinite;
+}
+
+@keyframes orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.v-beam {
+  fill: none;
+  stroke-dasharray: 0.25 0.75;
+  animation: beam 2.4s linear infinite;
+}
+
+@keyframes beam {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.v-ray {
+  fill: none;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation:
+    line-draw 1.2s var(--ease-calm) forwards,
+    shimmer 5s ease-in-out 2.2s infinite;
+}
+
+@keyframes shimmer {
+  0%,
+  100% {
+    stroke-opacity: 1;
+  }
+  50% {
+    stroke-opacity: 0.55;
+  }
+}
+
+.v-dome {
+  transform-box: view-box;
+  animation: dome 90s linear infinite;
+}
+
+@keyframes dome {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .v-expand {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  .v-expand-b {
+    display: none;
+  }
+
+  .v-ray {
+    stroke-dashoffset: 0;
+  }
 }
