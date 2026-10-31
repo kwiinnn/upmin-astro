@@ -1,24 +1,29 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { createSky } from "@/lib/sky";
 
-type Star = { x: number; y: number; r: number; a: number; tw: number; ph: number; flare: number; color: string };
-type Layer = { stars: Star[]; parallax: number; drift: number; glow: boolean };
 type Meteor = { x: number; y: number; vx: number; vy: number; len: number; age: number; life: number };
 
-// Three depth layers: many faint stars, fewer medium ones, a handful of bright ones.
-// `density` is stars per 10,000 px²; `cap` is [phone, desktop].
-const LAYERS = [
-  { density: 4, cap: [110, 260], r: [0.35, 0.8], a: [0.22, 0.5], parallax: 0.03, drift: 1.1, glow: false },
-  { density: 1.2, cap: [38, 90], r: [0.7, 1.15], a: [0.45, 0.8], parallax: 0.08, drift: 2.2, glow: false },
-  { density: 0.25, cap: [8, 18], r: [1.1, 1.6], a: [0.8, 1], parallax: 0.16, drift: 3.4, glow: true },
-];
+// The background is the real sky (lib/sky.ts): a NASA star map drawn on the
+// GPU, opening on the sky overhead at UP Mindanao right now, north up, and
+// turning as a slow time-lapse. This canvas sets that view and draws the
+// occasional shooting star on top.
+const SITE = { lat: 7.08, lon: 125.48 };
+const RAD = Math.PI / 180;
+const FOV = 100; // degrees across the screen diagonal
+const TIMELAPSE = 40; // × real sidereal rate
+const PAN = 0.08; // px of sky movement per px scrolled
 
-const COLORS = ["#e8efff", "#e8efff", "#e8efff", "#cddcff", "#ffe6b8"];
+// Local sidereal time in degrees: the right ascension on the meridian.
+function siderealDeg(lon: number) {
+  const jd = Date.now() / 86400000 + 2440587.5;
+  return (((280.46061837 + 360.98564736629 * (jd - 2451545) + lon) % 360) + 360) % 360;
+}
 
 const rand = (min: number, max: number) => min + Math.random() * (max - min);
 
-function glowSprite() {
+function meteorSprite() {
   const c = document.createElement("canvas");
   c.width = c.height = 64;
   const g = c.getContext("2d")!;
@@ -33,93 +38,50 @@ function glowSprite() {
 
 export function StarField({ cinematic = false }: { cinematic?: boolean }) {
   const ref = useRef<HTMLCanvasElement>(null);
+  const skyRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
     const canvas = ref.current!;
     const ctx = canvas.getContext("2d", { alpha: true })!;
     const motion = window.matchMedia("(prefers-reduced-motion: reduce)");
-    const sprite = glowSprite();
-    const sizeBoost = cinematic ? 1.35 : 1;
+    const sprite = meteorSprite();
+    const skyCanvas = skyRef.current!;
+    const sky = createSky(skyCanvas, { phone: window.innerWidth < 768, gain: cinematic ? 1.15 : 1 });
     const speed = cinematic ? 0.5 : 1;
 
     let w = 0;
     let h = 0;
-    let layers: Layer[] = [];
+    let scale = 0;
+    let ra0 = siderealDeg(SITE.lon) * RAD;
     let meteor: Meteor | null = null;
     let nextMeteor = performance.now() + rand(6000, 15000);
     let raf = 0;
     let last = performance.now();
-    let t = 0;
-
-    const build = () => {
-      const phone = w < 768;
-      layers = LAYERS.map((L) => {
-        const n = Math.min(L.cap[phone ? 0 : 1], Math.round(((w * h) / 10000) * L.density));
-        return {
-          parallax: L.parallax,
-          drift: L.drift,
-          glow: L.glow,
-          stars: Array.from({ length: n }, () => ({
-            x: Math.random() * w,
-            y: Math.random() * h,
-            r: rand(L.r[0], L.r[1]) * sizeBoost,
-            a: rand(L.a[0], L.a[1]),
-            tw: rand(0.4, 1.6),
-            ph: Math.random() * Math.PI * 2,
-            flare: 0,
-            color: COLORS[(Math.random() * COLORS.length) | 0],
-          })),
-        };
-      });
-    };
 
     const resize = () => {
-      const nw = window.innerWidth;
-      const nh = window.innerHeight;
-      const dpr = Math.min(window.devicePixelRatio || 1, nw < 768 ? 1.5 : 2);
-      canvas.width = Math.round(nw * dpr);
-      canvas.height = Math.round(nh * dpr);
+      w = window.innerWidth;
+      h = window.innerHeight;
+      const dpr = Math.min(window.devicePixelRatio || 1, w < 768 ? 1.5 : 2);
+      canvas.width = Math.round(w * dpr);
+      canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      // Mobile URL bars change only the height; keep the sky stable then.
-      const rebuild = nw !== w || layers.length === 0;
-      w = nw;
-      h = nh;
-      if (rebuild) build();
-      if (motion.matches) draw(0, false);
+      sky?.resize(w, h);
+      // Stereographic projection: px per unit so the diagonal spans FOV.
+      scale = Math.hypot(w, h) / 2 / (2 * Math.tan((FOV / 4) * RAD));
+      if (motion.matches) draw(0);
     };
 
-    const draw = (dt: number, animate: boolean) => {
+    const draw = (dt: number) => {
+      // View centre: overhead at the site, panned south as the page scrolls.
+      const dec0 = Math.max(-85 * RAD, SITE.lat * RAD - (window.scrollY * PAN) / scale);
+      const [cr, sr, cd, sd] = [Math.cos(ra0), Math.sin(ra0), Math.cos(dec0), Math.sin(dec0)];
+      sky?.render({
+        east: [-sr, cr, 0],
+        north: [-sd * cr, -sd * sr, cd],
+        forward: [cd * cr, cd * sr, sd],
+        scale,
+      });
       ctx.clearRect(0, 0, w, h);
-      const sy = window.scrollY;
-      const decay = Math.pow(0.08, dt);
-      for (const L of layers) {
-        const off = sy * L.parallax;
-        for (const s of L.stars) {
-          let a = s.a;
-          let r = s.r;
-          if (animate) {
-            s.x += L.drift * speed * dt;
-            if (s.x > w + 4) s.x -= w + 8;
-            if (Math.random() < dt * 0.02) s.flare = 1;
-            s.flare *= decay;
-            a = s.a * (0.68 + 0.32 * Math.sin(t * s.tw + s.ph)) + s.flare * 0.5;
-            r = s.r * (1 + s.flare * 0.6);
-          }
-          const y = (((s.y - off) % h) + h) % h;
-          ctx.globalAlpha = Math.min(1, a);
-          if (L.glow) {
-            const g = r * 9;
-            ctx.drawImage(sprite, s.x - g / 2, y - g / 2, g, g);
-          }
-          ctx.fillStyle = s.color;
-          if (r < 0.9) ctx.fillRect(s.x - r, y - r, r * 2, r * 2);
-          else {
-            ctx.beginPath();
-            ctx.arc(s.x, y, r, 0, Math.PI * 2);
-            ctx.fill();
-          }
-        }
-      }
       if (meteor) drawMeteor(dt);
       ctx.globalAlpha = 1;
     };
@@ -171,12 +133,12 @@ export function StarField({ cinematic = false }: { cinematic?: boolean }) {
     const loop = (now: number) => {
       const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
-      t += dt * speed;
+      ra0 += (360.98564736629 / 86400) * TIMELAPSE * speed * dt * RAD;
       if (!meteor && now > nextMeteor) {
         spawnMeteor();
         nextMeteor = now + rand(15000, 30000);
       }
-      draw(dt, true);
+      draw(dt);
       raf = requestAnimationFrame(loop);
     };
 
@@ -184,7 +146,7 @@ export function StarField({ cinematic = false }: { cinematic?: boolean }) {
       cancelAnimationFrame(raf);
       if (motion.matches) {
         meteor = null;
-        draw(0, false);
+        draw(0);
         window.addEventListener("scroll", onStaticScroll, { passive: true });
       } else {
         window.removeEventListener("scroll", onStaticScroll);
@@ -193,14 +155,14 @@ export function StarField({ cinematic = false }: { cinematic?: boolean }) {
       }
     };
 
-    // Reduced motion: no drift or twinkle, but keep gentle parallax on scroll.
+    // Reduced motion: the sky holds still, but still pans gently on scroll.
     let pending = false;
     const onStaticScroll = () => {
       if (pending) return;
       pending = true;
       requestAnimationFrame(() => {
         pending = false;
-        draw(0, false);
+        draw(0);
       });
     };
 
@@ -210,11 +172,21 @@ export function StarField({ cinematic = false }: { cinematic?: boolean }) {
       resizeTimer = window.setTimeout(resize, 120);
     };
 
+    let alive = true;
     resize();
     start();
+    sky?.loaded.then(
+      () => {
+        if (!alive) return;
+        if (motion.matches) draw(0);
+        skyCanvas.classList.add("ready");
+      },
+      () => {},
+    );
     window.addEventListener("resize", onResize);
     motion.addEventListener("change", start);
     return () => {
+      alive = false;
       cancelAnimationFrame(raf);
       clearTimeout(resizeTimer);
       window.removeEventListener("resize", onResize);
@@ -225,11 +197,7 @@ export function StarField({ cinematic = false }: { cinematic?: boolean }) {
 
   return (
     <>
-      <div className="nebula" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </div>
+      <canvas ref={skyRef} className="sky" aria-hidden="true" />
       <canvas ref={ref} className="starfield" aria-hidden="true" />
     </>
   );

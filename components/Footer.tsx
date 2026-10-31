@@ -86,6 +86,13 @@ export function Footer() {
           <Logo className="size-10 text-ink" />
           <p className="text-sm text-mute">University of the Philippines Mindanao</p>
           <p className="max-w-xs text-balance text-xs text-faint">{CLUB_FULL_NAME}</p>
+          <p className="mt-2 max-w-sm text-balance text-[0.7rem] text-faint/70">
+            Night sky from{" "}
+            <a href="https://svs.gsfc.nasa.gov/4851" className="underline" target="_blank" rel="noopener noreferrer">
+              NASA/Goddard SVS Deep Star Maps
+            </a>{" "}
+            (Gaia, Hipparcos and Tycho data)
+          </p>
         </div>
         <div className="mt-8">
           <NextButton to="hero" label="The beginning" up />

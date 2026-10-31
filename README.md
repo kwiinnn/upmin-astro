@@ -63,8 +63,16 @@ If you add a custom domain, set `NEXT_PUBLIC_SITE_URL` to it, or just regenerate
 - Club name, next meeting date, social links, length limits: `lib/site.ts` (the Facebook link is a `#` placeholder)
 - Logo: `components/Logo.tsx` (vector trace of the club mark; `animated` adds the draw-in, flare and comet). Favicons are `app/favicon.ico`, `app/icon.svg` and `app/apple-icon.png`
 - Colors and animation: `app/globals.css`
+- Background sky: `lib/sky.ts` draws NASA's [Deep Star Maps 2020](https://svs.gsfc.nasa.gov/4851) (NASA/Goddard SVS, public domain; built from the Gaia, Hipparcos and Tycho catalogues) on the GPU, re-projected so the view opens on the sky overhead at UP Mindanao right now and turns as a 40× time-lapse; `components/StarField.tsx` sets that view and adds shooting stars. `public/sky-8192.webp` (desktop, 2.3 MB) and `sky-4096.webp` (phones, 620 KB) combine the star map with the Milky Way layer:
+  ```
+  magick milkyway_2020_8k.exr -set colorspace RGB -evaluate multiply 10 -colorspace sRGB -statistic median 5x5 -blur 0x2.6 -level 20%,94% -modulate 100,112 -evaluate multiply 0.55 mw.png
+  magick starmap_2020_8k.exr -set colorspace RGB -evaluate multiply 1.4 -colorspace sRGB -level 7%,100% stars.png
+  magick mw.png stars.png -compose screen -composite -quality 80 sky-8192.webp
+  ```
+  Without WebGL the background is plain dark blue
+- "The Universe Itself" visual: Webb's First Deep Field ([weic2209a](https://esawebb.org/images/weic2209a/), credit NASA, ESA, CSA, and STScI, shown in the caption as required), cropped to `public/deep-field.webp`
 
-All animation respects `prefers-reduced-motion`. In that mode the stars don't drift or twinkle, there are no shooting stars, and the constellations show without the draw-in.
+All animation respects `prefers-reduced-motion`. In that mode the sky doesn't turn, there are no shooting stars, and the constellations show without the draw-in.
 
 ## Project layout
 
