@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Mission Briefing · UP Mindanao Astro
 
-## Getting Started
+Companion site for the club's General Assembly. Members scan a QR code, follow the talk through five "constellations" of space science one "slide" at a time, and can suggest topics for future sessions. Two extra routes: `/present`, a title screen with the QR code for the projector, and `/admin`, where you read the topic suggestions.
 
-First, run the development server:
+Next.js 16 (App Router), TypeScript, Tailwind v4, Upstash Redis. No animation libraries: the star field is one `<canvas>`, everything else is SVG and CSS.
+
+## Run locally
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local   # then set ADMIN_PASSWORD
+npm run dev                  # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Without Redis credentials the app falls back to an **in-memory store**. That's fine for local testing; data resets when the server restarts. `/admin` shows a warning banner while it is active.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+To test on your phone on the same Wi-Fi: `npm run dev -- -H 0.0.0.0`, then open `http://<your-computer-ip>:3000`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Environment variables
 
-## Learn More
+| Variable | Required | What it is |
+| --- | --- | --- |
+| `KV_REST_API_URL` / `KV_REST_API_TOKEN` | in production | Upstash Redis REST credentials. The Vercel Marketplace integration creates these automatically. |
+| `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` | alternative | Same thing, under the names a direct Upstash connection uses. Either pair works. |
+| `ADMIN_PASSWORD` | yes | Password for `/admin`. If it's empty, admin is disabled. Changing it signs out every admin session. |
+| `NEXT_PUBLIC_SITE_URL` | optional | URL encoded by `/qr.png`. Defaults to whatever host the request came in on. |
 
-To learn more about Next.js, take a look at the following resources:
+Secrets only live in env vars. `.env*` files are git-ignored, except `.env.example`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Deploy to Vercel
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+1. Push this folder to a GitHub repo.
+2. On [vercel.com/new](https://vercel.com/new), import the repo. The framework is detected as Next.js, and the defaults are fine.
+3. Add Redis: in the project, go to **Storage → Create Database → Upstash for Redis** (Marketplace), pick the free plan and a region close to the Philippines (e.g. Singapore), and connect it to the project. This adds the `KV_REST_API_*` variables for you.
+4. Under **Settings → Environment Variables**, add `ADMIN_PASSWORD` (Production and Preview).
+5. **Redeploy** (Deployments → ⋯ → Redeploy) so the new variables take effect.
+6. Open `https://<your-project>.vercel.app/admin`. Sign in and check that there is **no** "in-memory storage" warning.
 
-## Deploy on Vercel
+Prefer the CLI? `npm i -g vercel`, then `vercel` to link and deploy. Add Redis in the dashboard (step 3), then run `vercel env add ADMIN_PASSWORD` and `vercel --prod`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## QR code for slides
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Once deployed, either:
+
+- open `https://<your-project>.vercel.app/qr.png` and save the image (1200×1200 PNG; add `?format=svg` for a vector version), or
+- run `npm run qr -- https://<your-project>.vercel.app`, which writes `qr-code.png` and `qr-code.svg` here.
+
+If you add a custom domain, set `NEXT_PUBLIC_SITE_URL` to it, or just regenerate with the script. `/present` shows the same QR, large.
+
+## On the day
+
+- **Projector:** open `/present` full-screen (F11) while people come in, so they can scan the code.
+- **Afterwards:** read the topic suggestions in `/admin`, then clear them.
+
+## Security notes
+
+- **Topic suggestions:** 2–140 characters. Markup, control characters and bidi-override characters are stripped and whitespace is collapsed; React escapes everything on render. Rate limit: 20 per 10 min per IP, kept loose because the whole room may share one campus Wi-Fi address.
+- **Admin:** the password is checked in constant time and login attempts are rate-limited (8 per 10 min). The session is an HMAC-signed, HttpOnly, SameSite=Strict cookie that lasts 12 h.
+
+## Editing content
+
+- Cluster copy, facts, links and constellation shapes: `lib/clusters.ts`
+- Club name, founding date, next meeting date, social links, length limits: `lib/site.ts` (the Facebook link is a `#` placeholder)
+- Logo: `components/Logo.tsx` (vector trace of the club mark; `animated` adds the draw-in, flare and comet). Favicons are `app/favicon.ico`, `app/icon.svg` and `app/apple-icon.png`
+- Colors and animation: `app/globals.css`
+
+All animation respects `prefers-reduced-motion`. In that mode the stars don't drift or twinkle, there are no shooting stars, and the constellations show without the draw-in.
+
+## Project layout
+
+```
+app/
+  page.tsx               hero → five clusters → footer
+  present/page.tsx       projector title screen with QR
+  admin/page.tsx         topic suggestions
+  qr.png/route.ts        QR code of the site
+  api/suggest            POST
+  api/admin/*            login, logout, state, suggestions
+components/              Logo, StarField (canvas), Hero, MiniMap, ClusterSection, NextButton, visuals/, PresentView, AdminPanel
+lib/                     clusters, site config, kv (Upstash or memory), data, sanitize, ratelimit, auth
+scripts/qr.mjs           offline QR generator
+```
