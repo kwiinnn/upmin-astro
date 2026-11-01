@@ -33,7 +33,6 @@ body {
   background:
     radial-gradient(120% 70% at 50% 0%, #17143f 0%, transparent 60%),
     linear-gradient(180deg, var(--color-night) 0%, var(--color-deep) 100%);
-  background-attachment: fixed;
   color: var(--color-ink);
   font-family: var(--font-sans);
   font-size: 1.0625rem;
@@ -78,22 +77,25 @@ svg :focus-visible {
   padding-inline: max(var(--gutter), env(safe-area-inset-left));
 }
 
-/* ---------- Background: real sky + shooting-star canvas ---------- */
+/* ---------- Background: real sky + shooting-star canvas (StarField) ---------- */
 
 .starfield,
 .sky {
   position: fixed;
-  inset: 0;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 100%;
+  /* The large viewport height: a phone's address bar sliding in and out
+     doesn't resize the canvases, so the sky never jumps mid-scroll. */
+  height: 100vh;
+  height: 100lvh;
   z-index: 0;
   pointer-events: none;
 }
 
-/* The sky renders on black; screen blending adds its light to the page
-   (lib/sky.ts draws it, StarField sets the view). */
+/* Opaque: lib/sky.ts paints the page backdrop under the sky itself, so the
+   browser never blends this layer with the page while scrolling. */
 .sky {
-  mix-blend-mode: screen;
   opacity: 0;
   transition: opacity 2s var(--ease-calm);
 }

@@ -57,21 +57,42 @@ export function StarField({ cinematic = false }: { cinematic?: boolean }) {
     let nextMeteor = performance.now() + rand(6000, 15000);
     let raf = 0;
     let last = performance.now();
+    let lastSky = 0;
+    let lastY = -1;
+    let dirty = false; // the meteor canvas has something on it
 
+    // The canvases are 100lvh tall (globals.css), so a phone's address bar
+    // sliding in and out doesn't resize them; only real changes (rotation,
+    // window resizes) get here, and they don't make the sky jump.
     const resize = () => {
-      w = window.innerWidth;
-      h = window.innerHeight;
+      w = skyCanvas.clientWidth;
+      h = skyCanvas.clientHeight;
       const dpr = Math.min(window.devicePixelRatio || 1, w < 768 ? 1.5 : 2);
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      sky?.resize(w, h);
+      sky?.resize(w, h, dpr);
       // Stereographic projection: px per unit so the diagonal spans FOV.
       scale = Math.hypot(w, h) / 2 / (2 * Math.tan((FOV / 4) * RAD));
-      if (motion.matches) draw(0);
+      draw(0, true);
     };
 
-    const draw = (dt: number) => {
+    // The sky drifts only ~1 px/s, so between scrolls ~24 fps is plenty;
+    // scrolling redraws every frame so the pan stays in step.
+    const draw = (dt: number, force = false) => {
+      const now = performance.now();
+      if (force || window.scrollY !== lastY || now - lastSky > 40) {
+        lastSky = now;
+        lastY = window.scrollY;
+        renderSky();
+      }
+      if (dirty) ctx.clearRect(0, 0, w, h);
+      dirty = !!meteor;
+      if (meteor) drawMeteor(dt);
+      ctx.globalAlpha = 1;
+    };
+
+    const renderSky = () => {
       // View centre: overhead at the site, panned south as the page scrolls.
       const dec0 = Math.max(-85 * RAD, SITE.lat * RAD - (window.scrollY * PAN) / scale);
       const [cr, sr, cd, sd] = [Math.cos(ra0), Math.sin(ra0), Math.cos(dec0), Math.sin(dec0)];
@@ -81,9 +102,6 @@ export function StarField({ cinematic = false }: { cinematic?: boolean }) {
         forward: [cd * cr, cd * sr, sd],
         scale,
       });
-      ctx.clearRect(0, 0, w, h);
-      if (meteor) drawMeteor(dt);
-      ctx.globalAlpha = 1;
     };
 
     const spawnMeteor = () => {
@@ -146,7 +164,7 @@ export function StarField({ cinematic = false }: { cinematic?: boolean }) {
       cancelAnimationFrame(raf);
       if (motion.matches) {
         meteor = null;
-        draw(0);
+        draw(0, true);
         window.addEventListener("scroll", onStaticScroll, { passive: true });
       } else {
         window.removeEventListener("scroll", onStaticScroll);
@@ -162,15 +180,16 @@ export function StarField({ cinematic = false }: { cinematic?: boolean }) {
       pending = true;
       requestAnimationFrame(() => {
         pending = false;
-        draw(0);
+        draw(0, true);
       });
     };
 
     let resizeTimer = 0;
-    const onResize = () => {
+    const sizer = new ResizeObserver(() => {
+      if (skyCanvas.clientWidth === w && skyCanvas.clientHeight === h) return;
       clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(resize, 120);
-    };
+    });
 
     let alive = true;
     resize();
@@ -178,18 +197,18 @@ export function StarField({ cinematic = false }: { cinematic?: boolean }) {
     sky?.loaded.then(
       () => {
         if (!alive) return;
-        if (motion.matches) draw(0);
+        draw(0, true);
         skyCanvas.classList.add("ready");
       },
       () => {},
     );
-    window.addEventListener("resize", onResize);
+    sizer.observe(skyCanvas);
     motion.addEventListener("change", start);
     return () => {
       alive = false;
       cancelAnimationFrame(raf);
       clearTimeout(resizeTimer);
-      window.removeEventListener("resize", onResize);
+      sizer.disconnect();
       window.removeEventListener("scroll", onStaticScroll);
       motion.removeEventListener("change", start);
     };

@@ -22,6 +22,16 @@ uniform vec3 east, north, forward;
 const float PI = 3.14159265;
 // A light violet grade over the photo: a little less green, a little more blue.
 const vec3 TINT = vec3(1.04, 0.9, 1.16);
+// The page backdrop (same as body in globals.css), drawn here so the canvas
+// can be opaque: no blending with the page means nothing to recomposite on scroll.
+const vec3 NIGHT = vec3(6.0, 10.0, 24.0) / 255.0;
+const vec3 DEEP = vec3(2.0, 4.0, 11.0) / 255.0;
+const vec3 GLOW = vec3(23.0, 20.0, 63.0) / 255.0;
+vec3 backdrop(vec2 p) {
+  vec3 c = mix(NIGHT, DEEP, p.y / size.y);
+  vec2 e = vec2((p.x - size.x * 0.5) / (1.2 * size.x), p.y / (0.7 * size.y));
+  return mix(c, GLOW, clamp(1.0 - length(e) / 0.6, 0.0, 1.0));
+}
 void main() {
   // Inverse of StarField's stereographic view (east is left, north up).
   vec2 q = (gl_FragCoord.xy / dpr - size * 0.5) / scale;
@@ -30,7 +40,9 @@ void main() {
   vec3 s = (4.0 * q.x * east + 4.0 * q.y * north + (4.0 - r2) * forward) / (4.0 + r2);
   // RA 0h is the middle column and increases to the left, as on the sky.
   vec2 uv = vec2(0.5 - atan(s.y, s.x) / (2.0 * PI), 0.5 - asin(clamp(s.z, -1.0, 1.0)) / PI);
-  gl_FragColor = vec4(texture2D(tex, uv).rgb * TINT * gain, 1.0);
+  vec3 sky = texture2D(tex, uv).rgb * TINT * gain;
+  vec3 bg = backdrop(vec2(gl_FragCoord.x, size.y * dpr - gl_FragCoord.y) / dpr);
+  gl_FragColor = vec4(1.0 - (1.0 - bg) * (1.0 - sky), 1.0); // screen blend
 }`;
 
 type Sky = NonNullable<ReturnType<typeof build>>;
@@ -112,8 +124,8 @@ function build(canvas: HTMLCanvasElement, phone: boolean) {
   return {
     loaded,
     gain: 1,
-    resize(w: number, h: number) {
-      dpr = Math.min(2, window.devicePixelRatio || 1);
+    resize(w: number, h: number, pixelRatio: number) {
+      dpr = pixelRatio;
       canvas.width = Math.round(w * dpr);
       canvas.height = Math.round(h * dpr);
       gl.viewport(0, 0, canvas.width, canvas.height);
