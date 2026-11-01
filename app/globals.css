@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+/* Short phone screens (iPhone SE, Safari with its toolbars showing): the
+   hero tightens up so the constellation map keeps a usable size. */
+@custom-variant short (@media (max-width: 767px) and (max-height: 760px));
+
 @theme {
   --color-night: #0d0a20;
   --color-deep: #050310;
