@@ -22,7 +22,7 @@ const r2 = (n: number) => Math.round(n * 100) / 100;
 const VB = "0 0 320 200";
 
 /* I. Expanding universe: Webb's First Deep Field (galaxy cluster SMACS 0723),
-   thousands of real galaxies. A slow push-in reads as space growing. */
+   thousands of real galaxies. Kept still: a zoom read as the image resizing. */
 function Expanding() {
   return (
     <div className="v-deep-wrap">

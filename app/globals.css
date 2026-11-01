@@ -788,23 +788,6 @@ svg :focus-visible {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transform-origin: 50% 46%;
-  animation: deep-zoom 22s linear infinite;
-}
-
-@keyframes deep-zoom {
-  0% {
-    transform: scale(1);
-    opacity: 0;
-  }
-  6%,
-  90% {
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1.45);
-    opacity: 0;
-  }
 }
 
 .v-orbit {
