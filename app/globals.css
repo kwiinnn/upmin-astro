@@ -1,8 +1,8 @@
 @import "tailwindcss";
 
 @theme {
-  --color-night: #060a18;
-  --color-deep: #02040b;
+  --color-night: #0d0a20;
+  --color-deep: #050310;
   --color-ink: #eaf0ff;
   --color-mute: #aab8d9;
   --color-faint: #7d8cb3;
@@ -31,7 +31,7 @@ html {
 body {
   min-height: 100svh;
   background:
-    radial-gradient(120% 70% at 50% 0%, #17143f 0%, transparent 60%),
+    radial-gradient(120% 70% at 50% 0%, #22164c 0%, transparent 60%),
     linear-gradient(180deg, var(--color-night) 0%, var(--color-deep) 100%);
   color: var(--color-ink);
   font-family: var(--font-sans);

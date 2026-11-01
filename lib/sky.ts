@@ -24,9 +24,9 @@ const float PI = 3.14159265;
 const vec3 TINT = vec3(1.04, 0.9, 1.16);
 // The page backdrop (same as body in globals.css), drawn here so the canvas
 // can be opaque: no blending with the page means nothing to recomposite on scroll.
-const vec3 NIGHT = vec3(6.0, 10.0, 24.0) / 255.0;
-const vec3 DEEP = vec3(2.0, 4.0, 11.0) / 255.0;
-const vec3 GLOW = vec3(23.0, 20.0, 63.0) / 255.0;
+const vec3 NIGHT = vec3(13.0, 10.0, 32.0) / 255.0;
+const vec3 DEEP = vec3(5.0, 3.0, 16.0) / 255.0;
+const vec3 GLOW = vec3(34.0, 22.0, 76.0) / 255.0;
 vec3 backdrop(vec2 p) {
   vec3 c = mix(NIGHT, DEEP, p.y / size.y);
   vec2 e = vec2((p.x - size.x * 0.5) / (1.2 * size.x), p.y / (0.7 * size.y));
