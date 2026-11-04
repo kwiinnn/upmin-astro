@@ -1,18 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Instrument_Serif, Manrope } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import { Ripple } from "@/components/Ripple";
 import { CLUB_NAME, SITE_TITLE } from "@/lib/site";
 import "./globals.css";
 
-const display = Instrument_Serif({
-  variable: "--font-display",
-  weight: "400",
-  style: ["normal", "italic"],
-  subsets: ["latin"],
-});
-
-const sans = Manrope({
-  variable: "--font-body",
+// Brand.pdf header font. The body font (Helvetica Now) is set in globals.css.
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
   subsets: ["latin"],
 });
 
@@ -32,7 +26,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={`${display.variable} ${sans.variable} antialiased`}>
+    <html lang="en" className={`${montserrat.variable} antialiased`}>
       <body>
         {children}
         <Ripple />
