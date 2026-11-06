@@ -39,7 +39,7 @@ export function Footer() {
             <p className="display mt-3 text-5xl">
               <time dateTime={NEXT_MEETING.iso}>{NEXT_MEETING.label}</time>
             </p>
-            <p className="mt-3 text-mute">Bring a friend, and bring your questions. Clear skies until then.</p>
+            <p className="display mt-4 text-2xl text-gold sm:text-3xl">One Universe, One Sky</p>
             <ul className="mt-6 flex flex-wrap gap-2">
               {SOCIAL_LINKS.map((s) => {
                 const Icon = SOCIAL_ICONS[s.kind];
