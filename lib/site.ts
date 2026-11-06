@@ -10,9 +10,8 @@ export const NEXT_MEETING = {
   label: "6 November 2026",
 };
 
-// The Facebook href is still a placeholder: replace "#" with the page URL.
 export const SOCIAL_LINKS = [
-  { kind: "facebook", label: "UP Mindanao ASTRO", href: "#" },
+  { kind: "facebook", label: "UP Mindanao ASTRO", href: "https://www.facebook.com/share/19mjChmPMk/" },
   { kind: "instagram", label: "@upminastro", href: "https://www.instagram.com/upminastro/" },
   { kind: "email", label: "upminastro@gmail.com", href: "mailto:upminastro@gmail.com" },
 ] as const;
